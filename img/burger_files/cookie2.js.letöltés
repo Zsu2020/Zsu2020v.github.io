@@ -1,0 +1,163 @@
+var cookies = [];
+
+/**
+ * Check null
+ *
+ * @param input mixed
+ * @return boolean
+ */
+function isNull(input) {
+	return (input == null);
+}
+
+/**
+ * Check object
+ *
+ * @param input mixed
+ * @return boolean
+ */
+function isObject(input) {
+	return (typeof(input) == 'object' && !isNull(input));
+}
+
+/**
+ * Check array
+ *
+ * @param input mixed
+ * @return boolean
+ */
+function isArray(input) {
+	return (isObject(input) && (input instanceof Array));
+}
+
+/**
+ * Check defined
+ *
+ * @param input mixed
+ * @return boolean
+ */
+function isDefined(input) {
+	return (typeof(input) != 'undefined');
+}
+
+/**
+ * Check string
+ *
+ * @param input mixed
+ * @return boolean
+ */
+function isString(input) {
+	return (typeof(input) == 'string' && !isNull(input));
+}
+
+function collectCookies() {
+	cookies = [];
+
+	if (document.cookie.length > 0) {
+		var cookiesArr = document.cookie.split(';');
+
+		if (isArray(cookiesArr) && cookiesArr.length) {
+			for (var i = 0; i<cookiesArr.length; i++) {
+				var arr = cookiesArr[i].split('=');
+
+				if (isArray(arr) && arr.length) {
+					var name = arr[0].trim();
+
+					cookies[name] = unescape(arr[1]);
+				}
+			}
+		}
+	}
+}
+
+/**
+ * Set cookie
+ *
+ * @param name string
+ * @param value mixed
+ * @param expiredays integer
+ * @param path string
+ * @return void
+ */
+function setCookie(name, value, expiredays, path) {
+	var exdate = new Date();
+	exdate.setDate(exdate.getDate() + expiredays);
+
+	var cookieStr = name + "=" + escape(value) + ((expiredays == null) ? '' : ';expires=' + exdate.toGMTString());
+
+	if (isString(path)) {
+		cookieStr += ';path=' + path;
+	}
+	document.cookie = cookieStr;
+	collectCookies();
+}
+
+/**
+ * Get cookie
+ *
+ * @param name string
+ * @return string
+ */
+function getCookie(name) {
+	if (isDefined(cookies[name])) {
+		return cookies[name];
+	}
+
+	if (document.cookie.length > 0) {
+		var start = document.cookie.indexOf(name + "=");
+
+		if (start != -1) {
+			start = start + name.length + 1;
+			var end = document.cookie.indexOf(";", start);
+
+			if (end == -1) {
+				end = document.cookie.length;
+			}
+			var value = unescape(document.cookie.substring(start, end));
+
+			collectCookies();
+
+			return value;
+		}
+	}
+	return null;
+}
+
+/**
+ * Delete cookie
+ *
+ * @param name string
+ * @return string
+ */
+function deleteCookie(name) {
+	setCookie(name, '', -1);
+	collectCookies();
+}
+
+function cookiePolicy() {
+	if(isNull(getCookie('cp'))) {
+		jQuery('body').append('' +
+			'<div id="cookiePolicy">' +
+			'<div class="cookiePolicyInner">' +
+			'<div class="left">A receptvarazs.hu oldal süti (cookie) fájlokat használ. Ezeket a fájlokat a rendszer az Ön gépén tárolja. A cookie-k személyek azonosítására nem alkalmasak, szolgáltatásaink biztosításához szükségesek. Az oldal használatával Ön beleegyezik a cookie-k használatába. <a href="/adatvedelem">További információ</a></div>' +
+			'<div class="right">' +
+			'<div>' +
+			'<a id="cookiePolicyClose" name="cookieClose" href="#" onclick="cookiePolicyClose(); return false;" class="button scroll">Bezárás</a>' +
+			'</div>' +
+			'</div>' +
+			'</div>' +
+			'</div>'
+		);
+	}
+}
+
+function cookiePolicyClose() {
+	setCookie('cp', 1, 60, '/');
+	
+	var element = document.getElementById("cookiePolicy");
+	element.outerHTML = "";
+	delete element;
+}
+
+collectCookies();
+cookiePolicy();
